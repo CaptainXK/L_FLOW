@@ -3,6 +3,8 @@
 #include<vector>
 #include<string.h>
 #include<algorithm>
+#include<time.h>
+#include<stdio.h>
 using namespace std;
 
 bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst
@@ -83,6 +85,7 @@ int main(){
 //	status(f,nodes,"f");
 //	status(rg,nodes,"rg");
 	int min_c;
+	clock_t start = clock();
 	while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
 		cout<<"cur path : ";
 		for(int i=0; i<cur_path.size(); i++){
@@ -109,11 +112,15 @@ int main(){
 		while(cur_path.size()>0)
 			cur_path.pop_back();
 	}
+	double diff = (clock()-start)/CLOCKS_PER_SEC;
+	
 	int sum=0;
 	for(int i=0; i<nodes; i++){
 		if(f[0][i]>0)
 			sum += f[0][i];
 	}
 	cout<<"max flow : "<<sum<<endl;
+//	cout<<diff<<endl;
+	printf("time cost : %lf",diff);
 	return 0;	
 }

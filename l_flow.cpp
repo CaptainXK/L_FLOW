@@ -3,14 +3,45 @@
 #include<vector>
 #include<string.h>
 #include<algorithm>
+#include<queue>
 #include<time.h>
 #include<stdio.h>
 using namespace std;
 
-bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst
+bool BFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst with BFS
+	int * bfs_map = new int[num_p]();//traceback path
+	int * bfs_flag = new int[num_p]();//visited node flag
+	queue<int> bfs_que;
+	bfs_que.push(cur);
+	bfs_map[cur]=-1;
+	int top_node;
+	while( !bfs_que.empty() ){
+		top_node = bfs_que.front();
+		for(int i=0; i<num_p; i++){
+			if( map[top_node][i]>0 && bfs_flag[i]==0){
+				bfs_map[i]=top_node;//update current node's prefix node
+				bfs_que.push(i);
+			}
+		}
+		bfs_que.pop();
+		bfs_flag[top_node]=1;
+		if(top_node==dst){//find a traceback path and store it in "path"
+			int trace=dst;
+			while(bfs_map[trace]!=-1){//-1 is the pre node of node 0
+				path.push_back(trace);
+				trace = bfs_map[trace];
+			}
+			path.push_back(0);
+			reverse(path.begin(),path.end());//reverse to make sure the path begining with node 0
+			return true;
+		}
+	}
+}
+
+bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst with DFS
 	bool flag = false;
 	if(find(path.begin(), path.end(), cur)!=path.end())//avoid loop
-		return false;	
+		return false;
 	path.push_back(cur);
 	if(cur!=dst){
 		for(int i=0; i<num_p; i++){
@@ -18,7 +49,7 @@ bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a pat
 				flag = DFS(map,path,num_p,i,dst);
 				if(flag){
 					return true;
-				}	
+				}
 			}
 		}
 		if(flag==false){
@@ -28,7 +59,7 @@ bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a pat
 	}
 	else{
 		return true;
-	}		
+	}
 }
 
 void get_resi(int **c,int **f,int **rg, int num){
@@ -71,14 +102,14 @@ int main(){
 		rg[i]=new int[nodes];
 		memset(f[i],0,nodes*sizeof(int));
 		memset(c[i],0,nodes*sizeof(int));
-		memset(rg[i],0,nodes*sizeof(int));		
+		memset(rg[i],0,nodes*sizeof(int));
 	}
-	
+
 	int a=0,b=0,weight=0;
 	while(!fin.eof()){//inicialize capacity
 		fin>>a>>b>>weight;
 		c[a][b]=weight;
-		rg[a][b]=weight;		
+		rg[a][b]=weight;
 	}
 	get_resi(c,f,rg,nodes);
 //	status(c,nodes,"c");
@@ -86,13 +117,14 @@ int main(){
 //	status(rg,nodes,"rg");
 	int min_c;
 	clock_t start = clock();
-	while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
-		cout<<"cur path : ";
+	// while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
+	while(BFS(rg, cur_path, nodes, 0 ,nodes-1)){
+	cout<<"cur path : ";
 		for(int i=0; i<cur_path.size(); i++){
 			cout<<cur_path[i]<<" ";
 		}
 		cout<<endl;
-		
+
 		min_c=rg[cur_path[0]][cur_path[1]];
 		for(int i=0; i<cur_path.size()-1; i++){//find the min weight sub_path in the found path
 			if( rg[cur_path[i]][cur_path[i+1]]<min_c ){
@@ -104,8 +136,8 @@ int main(){
 				f[cur_path[i]][cur_path[i+1]] += min_c;
 			else
 				f[cur_path[i+1]][cur_path[i]] -= min_c;
-		}	
-		get_resi(c,f,rg,nodes);	
+		}
+		get_resi(c,f,rg,nodes);
 //		status(c,nodes,"c");
 //		status(f,nodes,"f");
 //		status(rg,nodes,"rg");
@@ -113,7 +145,7 @@ int main(){
 			cur_path.pop_back();
 	}
 	double diff = (clock()-start)/CLOCKS_PER_SEC;
-	
+
 	int sum=0;
 	for(int i=0; i<nodes; i++){
 		if(f[0][i]>0)
@@ -122,5 +154,5 @@ int main(){
 	cout<<"max flow : "<<sum<<endl;
 //	cout<<diff<<endl;
 	printf("time cost : %lf",diff);
-	return 0;	
+	return 0;
 }

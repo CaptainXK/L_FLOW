@@ -153,6 +153,6 @@ int main(){
 	}
 	cout<<"max flow : "<<sum<<endl;
 //	cout<<diff<<endl;
-	printf("time cost : %lf",diff);
+	printf("time cost : %lf\n",diff);
 	return 0;
 }

@@ -8,8 +8,44 @@
 #include<stdio.h>
 using namespace std;
 
+bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int **cost = NULL , int **c = NULL, int **f = NULL){
+	int * bf_visited = new int[num_p]();
+	int * bf_map = new int[num_p]();
+	int * bf_cost = new int[num_p]();
+	memset(bf_map, -1, num_p*sizeof(int));
+	for(int i=0; i<num_p; i++){
+		if(cost[0][i]>0)
+			bf_cost[i]=cost[0][i];
+		else
+			bf_cost[i]=9999999;
+	}
+
+	for(int i=0; i<num_p; i++){//loop for nodes' number times
+		for(int j=0; j<num_p; j++){
+			for(int k=0; k<num_p; k++){
+				if(map[j][k]>0 && f[j][k]<c[j][k] && bf_cost[k]>bf_cost[j]+cost[j][k]){
+					bf_map[k] = j;
+					bf_cost[k] = bf_cost[j]+cost[j][k];
+				}
+			}
+		}
+	}
+
+	if(bf_map[dst]=-1)//if dst node's pre node is not exsit
+		return false;
+	else{
+		int trace = dst;
+		while(trace!=-1){
+			path.push_back(trace);
+			trace = bf_map[trace];
+		}
+		reverse(path.begin(),path.end());
+		return true;
+	}
+}
+
 bool BFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst with BFS
-	int * bfs_map = new int[num_p]();//traceback path
+	int * bfs_map = new int[num_p]();//traceback path, "bfs_map[i] == j" means that ith node's pre node is jth node
 	int * bfs_flag = new int[num_p]();//visited node flag
 	queue<int> bfs_que;
 	bfs_que.push(cur);
@@ -83,7 +119,7 @@ void status(int **input, int num, const char* str){
 	}
 }
 
-int main(){
+int main(int argc , int **argv){
 	ifstream fin("data.txt",ios::in);
 	int nodes;
 	int **f , **c, **rg;//current flow, capacity, residual graph
@@ -112,9 +148,6 @@ int main(){
 		rg[a][b]=weight;
 	}
 	get_resi(c,f,rg,nodes);
-//	status(c,nodes,"c");
-//	status(f,nodes,"f");
-//	status(rg,nodes,"rg");
 	int min_c;
 	clock_t start = clock();
 	// while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
@@ -138,9 +171,6 @@ int main(){
 				f[cur_path[i+1]][cur_path[i]] -= min_c;
 		}
 		get_resi(c,f,rg,nodes);
-//		status(c,nodes,"c");
-//		status(f,nodes,"f");
-//		status(rg,nodes,"rg");
 		while(cur_path.size()>0)
 			cur_path.pop_back();
 	}

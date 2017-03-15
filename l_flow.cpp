@@ -62,7 +62,7 @@ bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a pat
 	}
 }
 
-void get_resi(int **c,int **f,int **rg, int num){
+void get_resi(int **c,int **f,int **rg, int num){//获取残留网络
 	for(int i=0; i<num; i++){
 		for(int j=0; j<num; j++){
 			if( rg[i][j]>0 && c[i][j]>0){

@@ -7,32 +7,39 @@
 #include<time.h>
 #include<stdio.h>
 using namespace std;
+#define INF 0xfffffff
 
 bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int **cost = NULL , int **c = NULL, int **f = NULL){
 	int * bf_visited = new int[num_p]();
 	int * bf_map = new int[num_p]();
-	int * bf_cost = new int[num_p]();
+	int * bf_dist = new int[num_p]();
 	memset(bf_map, -1, num_p*sizeof(int));
 	for(int i=0; i<num_p; i++){
-		if(cost[0][i]>0)
-			bf_cost[i]=cost[0][i];
+		if(map[0][i]>0){
+			bf_dist[i]=map[0][i];
+			bf_map[i]=0;
+		}
 		else
-			bf_cost[i]=9999999;
+			bf_dist[i]=INF;
 	}
 
-	for(int i=0; i<num_p; i++){//loop for nodes' number times
+	for(int i=0; i<num_p; i++){//relax operation, weight is the cost of every edge
 		for(int j=0; j<num_p; j++){
 			for(int k=0; k<num_p; k++){
-				if(map[j][k]>0 && f[j][k]<c[j][k] && bf_cost[k]>bf_cost[j]+cost[j][k]){
+				if(map[j][k]>0 && bf_dist[k]>bf_dist[j]+cost[j][k]){//松弛操作
 					bf_map[k] = j;
-					bf_cost[k] = bf_cost[j]+cost[j][k];
+					bf_dist[k] = bf_dist[j]+cost[j][k];
 				}
 			}
 		}
 	}
 
-	if(bf_map[dst]=-1)//if dst node's pre node is not exsit
+	if(bf_map[dst]==-1){//if dst node's pre node is not exsit
+		delete [] bf_visited;
+		delete [] bf_map;
+		delete [] bf_dist;
 		return false;
+	}
 	else{
 		int trace = dst;
 		while(trace!=-1){
@@ -40,6 +47,11 @@ bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int
 			trace = bf_map[trace];
 		}
 		reverse(path.begin(),path.end());
+
+		delete [] bf_visited;
+		delete [] bf_map;
+		delete [] bf_dist;
+
 		return true;
 	}
 }
@@ -69,9 +81,15 @@ bool BFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a pat
 			}
 			path.push_back(0);
 			reverse(path.begin(),path.end());//reverse to make sure the path begining with node 0
+
+			delete [] bfs_map;
+			delete [] bfs_flag;
 			return true;
 		}
 	}
+	delete [] bfs_map;
+	delete [] bfs_flag;
+	return false;
 }
 
 bool DFS(int **map, vector<int> &path, int num_p, int cur, int dst){//find a path from src to dst with DFS
@@ -119,10 +137,11 @@ void status(int **input, int num, const char* str){
 	}
 }
 
-int main(int argc , int **argv){
-	ifstream fin("data.txt",ios::in);
+int main(int argc , char **argv){
+	// ifstream fin("l_data.txt",ios::in);
+	ifstream fin("l_cost_l_data.txt",ios::in);
 	int nodes;
-	int **f , **c, **rg;//current flow, capacity, residual graph
+	int **f , **c, **rg, **cost;//current flow, capacity, residual graph, cost
 	vector<int> cur_path;
 	if(!fin.is_open()){
 		cout<<"file open error!\n";
@@ -132,26 +151,31 @@ int main(int argc , int **argv){
 	f = new int*[nodes];
 	c = new int*[nodes];
 	rg = new int*[nodes];
+	cost = new int*[nodes];
 	for(int i=0; i<nodes; i++){
 		f[i]=new int[nodes];
 		c[i]=new int[nodes];
 		rg[i]=new int[nodes];
+		cost[i]=new int[nodes];
 		memset(f[i],0,nodes*sizeof(int));
 		memset(c[i],0,nodes*sizeof(int));
 		memset(rg[i],0,nodes*sizeof(int));
+		memset(cost[i],0,nodes*sizeof(int));
 	}
 
-	int a=0,b=0,weight=0;
+	int a=0,b=0,capacity=0,weight=0;
 	while(!fin.eof()){//inicialize capacity
-		fin>>a>>b>>weight;
-		c[a][b]=weight;
-		rg[a][b]=weight;
+		fin>>a>>b>>capacity>>weight;
+		c[a][b]=capacity;
+		rg[a][b]=capacity;
+		cost[a][b]=weight;
 	}
 	get_resi(c,f,rg,nodes);
 	int min_c;
-	clock_t start = clock();
+	//clock_t start = clock();
 	// while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
-	while(BFS(rg, cur_path, nodes, 0 ,nodes-1)){
+	//while(BFS(rg, cur_path, nodes, 0 ,nodes-1)){
+	while( BELLMAN_FORD(rg, cur_path, nodes, 0 ,nodes-1, cost, c, f) ){
 	cout<<"cur path : ";
 		for(int i=0; i<cur_path.size(); i++){
 			cout<<cur_path[i]<<" ";
@@ -165,24 +189,35 @@ int main(int argc , int **argv){
 			}
 		}
 		for(int i=0; i<cur_path.size()-1; i++){
-			if(c[cur_path[i]][cur_path[i+1]] > 0)
+			if(c[cur_path[i]][cur_path[i+1]] > 0){
 				f[cur_path[i]][cur_path[i+1]] += min_c;
-			else
+			}
+			else{
 				f[cur_path[i+1]][cur_path[i]] -= min_c;
+			}
 		}
 		get_resi(c,f,rg,nodes);
 		while(cur_path.size()>0)
 			cur_path.pop_back();
 	}
-	double diff = (clock()-start)/CLOCKS_PER_SEC;
+	//double diff = (clock()-start)/CLOCKS_PER_SEC;
 
 	int sum=0;
+	int sum_cost;
 	for(int i=0; i<nodes; i++){
 		if(f[0][i]>0)
 			sum += f[0][i];
 	}
+
+	for(int i=0; i<nodes; i++){
+		for(int j=0; j<nodes; j++){
+			if(f[i][j]>0)
+				sum_cost+=f[i][j]*cost[i][j];
+		}
+	}
 	cout<<"max flow : "<<sum<<endl;
-//	cout<<diff<<endl;
-	printf("time cost : %lf",diff);
+	cout<<"min cost : "<<sum_cost<<endl;
+	//cout<<diff<<endl;
+	//printf("time cost : %lf",diff);
 	return 0;
 }

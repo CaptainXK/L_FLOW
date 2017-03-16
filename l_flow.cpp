@@ -15,8 +15,8 @@ bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int
 	int * bf_dist = new int[num_p]();
 	memset(bf_map, -1, num_p*sizeof(int));
 	for(int i=0; i<num_p; i++){
-		if(map[0][i]>0){
-			bf_dist[i]=map[0][i];
+		if(cost[0][i]>0){
+			bf_dist[i]=cost[0][i];
 			bf_map[i]=0;
 		}
 		else
@@ -26,7 +26,7 @@ bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int
 	for(int i=0; i<num_p; i++){//relax operation, weight is the cost of every edge
 		for(int j=0; j<num_p; j++){
 			for(int k=0; k<num_p; k++){
-				if(map[j][k]>0 && bf_dist[k]>bf_dist[j]+cost[j][k]){//松弛操作
+				if(map[j][k]>0 && f[j][k]<c[j][k] && bf_dist[k]>bf_dist[j]+cost[j][k]){//松弛操作,只考察残留网络中存在，并且当前流量小于容量的边
 					bf_map[k] = j;
 					bf_dist[k] = bf_dist[j]+cost[j][k];
 				}
@@ -47,11 +47,9 @@ bool BELLMAN_FORD(int **map, vector<int> &path, int num_p, int cur, int dst, int
 			trace = bf_map[trace];
 		}
 		reverse(path.begin(),path.end());
-
 		delete [] bf_visited;
 		delete [] bf_map;
 		delete [] bf_dist;
-
 		return true;
 	}
 }
@@ -138,8 +136,8 @@ void status(int **input, int num, const char* str){
 }
 
 int main(int argc , char **argv){
-	// ifstream fin("l_data.txt",ios::in);
-	ifstream fin("l_cost_l_data.txt",ios::in);
+	ifstream fin("l_data.txt",ios::in);
+	// ifstream fin("l_cost_l_data.txt",ios::in);
 	int nodes;
 	int **f , **c, **rg, **cost;//current flow, capacity, residual graph, cost
 	vector<int> cur_path;
@@ -169,8 +167,14 @@ int main(int argc , char **argv){
 		c[a][b]=capacity;
 		rg[a][b]=capacity;
 		cost[a][b]=weight;
+		cost[b][a]=-weight;
 	}
 	get_resi(c,f,rg,nodes);
+	// status(c,nodes,"c");
+	// status(f,nodes,"f");
+	// status(rg,nodes,"rg");
+	// status(cost,nodes,"cost");
+
 	int min_c;
 	//clock_t start = clock();
 	// while(DFS(rg, cur_path, nodes, 0 ,nodes-1)){
@@ -209,6 +213,8 @@ int main(int argc , char **argv){
 			sum += f[0][i];
 	}
 
+	status(f,nodes,"f");
+	status(cost,nodes,"cost");
 	for(int i=0; i<nodes; i++){
 		for(int j=0; j<nodes; j++){
 			if(f[i][j]>0)
